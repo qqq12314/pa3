@@ -2,7 +2,7 @@
 #include "monitor/expr.h"
 #include "monitor/watchpoint.h"
 #include "nemu.h"
-
+#include <string.h>
 #include <stdlib.h>
 #include <readline/readline.h>
 #include <readline/history.h>
@@ -38,7 +38,24 @@ static int cmd_si(char *args) {
   cpu_exec(n);
   return 0;
 }
-
+static int cmd_info(char *args) {
+  if (args == NULL) {
+    printf("Usage: info r\n");
+    return 0;
+  }
+  if (strcmp(args, "r") == 0) {
+    printf("eax\t0x%08x\n", cpu.eax);
+    printf("ecx\t0x%08x\n", cpu.ecx);
+    printf("edx\t0x%08x\n", cpu.edx);
+    printf("ebx\t0x%08x\n", cpu.ebx);
+    printf("esp\t0x%08x\n", cpu.esp);
+    printf("ebp\t0x%08x\n", cpu.ebp);
+    printf("esi\t0x%08x\n", cpu.esi);
+    printf("edi\t0x%08x\n", cpu.edi);
+    printf("eip\t0x%08x\n", cpu.eip);
+  }
+  return 0;
+}
 static int cmd_q(char *args) {
   return -1;
 }
@@ -54,6 +71,7 @@ static struct {
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q },
   {"si", "Step one or more instructions", cmd_si},
+  { "info", "Print program status", cmd_info },
   /* TODO: Add more commands */
 
 };
