@@ -30,6 +30,27 @@ static int cmd_c(char *args) {
   cpu_exec(-1);
   return 0;
 }
+static int cmd_x(char *args) {
+  if (args == NULL) {
+    printf("Usage: x N EXPR\n");
+    return 0;
+  }
+  char *n_str = strtok(args, " ");
+  char *addr_str = strtok(NULL, " ");
+  if (n_str == NULL || addr_str == NULL) {
+    printf("Usage: x N EXPR\n");
+    return 0;
+
+  }
+  int n = atoi(n_str);
+  uint32_t addr = strtoul(addr_str, NULL, 16);
+  int i;
+  for (i = 0; i < n; i++) {
+    uint32_t data = vaddr_read(addr + i * 4, 4);
+    printf("0x%08x: 0x%08x\n", addr + i * 4, data);
+  }
+  return 0;
+}
 static int cmd_si(char *args) {
   int n = 1;
   if (args != NULL) {
@@ -72,6 +93,7 @@ static struct {
   { "q", "Exit NEMU", cmd_q },
   {"si", "Step one or more instructions", cmd_si},
   { "info", "Print program status", cmd_info },
+  { "x", "Examine memory", cmd_x },
   /* TODO: Add more commands */
 
 };
