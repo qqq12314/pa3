@@ -26,9 +26,16 @@ char* rl_gets() {
 
   return line_read;
 }
-
 static int cmd_c(char *args) {
   cpu_exec(-1);
+  return 0;
+}
+static int cmd_si(char *args) {
+  int n = 1;
+  if (args != NULL) {
+    n = atoi(args);
+  }
+  cpu_exec(n);
   return 0;
 }
 
@@ -46,7 +53,7 @@ static struct {
   { "help", "Display informations about all supported commands", cmd_help },
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q },
-
+  {"si", "Step one or more instructions", cmd_si},
   /* TODO: Add more commands */
 
 };
