@@ -201,13 +201,13 @@ static int dominant_operator(int p, int q) {
 
 
 
-    int pri = 100;
+    int pri = -1;
 
     if (type == '+' || type == '-') pri = 1;
 
     else if (type == '*' || type == '/') pri = 2;
 
-
+    else continue;
 
     if (pri <= min_pri) {
 
