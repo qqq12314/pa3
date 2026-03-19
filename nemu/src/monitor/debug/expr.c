@@ -129,7 +129,199 @@ static bool make_token(char *e) {
 
   return true;
 }
+static bool check_parentheses(int p, int q) {
 
+  if (tokens[p].type != '(' || tokens[q].type != ')') {
+
+    return false;
+
+  }
+
+
+
+  int balance = 0;
+
+  int i;
+
+  for (i = p; i <= q; i++) {
+
+    if (tokens[i].type == '(') balance++;
+
+    if (tokens[i].type == ')') balance--;
+
+
+
+    if (balance == 0 && i < q) {
+
+      return false;
+
+    }
+
+  }
+
+
+
+  return balance == 0;
+
+}
+static int dominant_operator(int p, int q) {
+
+  int op = -1;
+
+  int min_pri = 100;
+
+  int level = 0;
+
+  int i;
+
+
+
+  for (i = p; i <= q; i++) {
+
+    int type = tokens[i].type;
+
+
+
+    if (type == '(') {
+
+      level++;
+
+      continue;
+
+    }
+
+    if (type == ')') {
+
+      level--;
+
+      continue;
+
+    }
+
+
+
+    if (level > 0) continue;
+
+
+
+    int pri = 100;
+
+
+
+    if (type == '+' || type == '-') pri = 1;
+
+    else if (type == '*' || type == '/') pri = 2;
+
+
+
+    if (pri <= min_pri) {
+
+      min_pri = pri;
+
+      op = i;
+
+    }
+
+  }
+
+
+
+  return op;
+
+}
+static uint32_t eval(int p, int q, bool *success) {
+
+  if (p > q) {
+
+    *success = false;
+
+    return 0;
+
+  }
+
+
+
+  if (p == q) {
+
+    if (tokens[p].type == TK_NUM) {
+
+      *success = true;
+
+      return strtoul(tokens[p].str, NULL, 10);
+
+    } else {
+
+      *success = false;
+
+      return 0;
+
+    }
+
+  }
+
+
+
+  if (check_parentheses(p, q)) {
+
+    return eval(p + 1, q - 1, success);
+
+  }
+
+
+
+  int op = dominant_operator(p, q);
+
+  if (op == -1) {
+
+    *success = false;
+
+    return 0;
+
+  }
+
+
+
+  uint32_t val1 = eval(p, op - 1, success);
+
+  if (!*success) return 0;
+
+
+
+  uint32_t val2 = eval(op + 1, q, success);
+
+  if (!*success) return 0;
+
+
+
+  switch (tokens[op].type) {
+
+    case '+': return val1 + val2;
+
+    case '-': return val1 - val2;
+
+    case '*': return val1 * val2;
+
+    case '/':
+
+      if (val2 == 0) {
+
+        *success = false;
+
+        return 0;
+
+      }
+
+      return val1 / val2;
+
+    default:
+
+      *success = false;
+
+      return 0;
+
+  }
+
+}
 uint32_t expr(char *e, bool *success) {
 
   if (!make_token(e)) {
@@ -142,62 +334,17 @@ uint32_t expr(char *e, bool *success) {
 
 
 
-  if (nr_token == 1 && tokens[0].type == TK_NUM) {
+  if (nr_token == 0) {
 
-    *success = true;
+    *success = false;
 
-    return strtoul(tokens[0].str, NULL, 10);
-
-  }
-
-
-
-  if (nr_token == 3 &&
-
-      tokens[0].type == TK_NUM &&
-
-      tokens[2].type == TK_NUM) {
-
-
-
-    uint32_t val1 = strtoul(tokens[0].str, NULL, 10);
-
-    uint32_t val2 = strtoul(tokens[2].str, NULL, 10);
-
-
-
-    *success = true;
-
-
-
-    switch (tokens[1].type) {
-
-      case '+': return val1 + val2;
-
-      case '-': return val1 - val2;
-
-      case '*': return val1 * val2;
-
-      case '/':
-
-        if (val2 == 0) {
-
-          *success = false;
-
-          return 0;
-
-        }
-
-        return val1 / val2;
-
-    }
+    return 0;
 
   }
 
 
 
-  *success = false;
-
-  return 0;
+  return eval(0, nr_token - 1, success);
 
 }
+ 
