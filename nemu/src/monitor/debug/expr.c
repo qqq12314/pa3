@@ -1,5 +1,6 @@
 #include "nemu.h"
 #include <stdlib.h>
+#include <string.h>
 
 /* We use the POSIX regex functions to process regular expressions.
  * Type 'man regex' for more information about POSIX regex functions.
@@ -88,36 +89,31 @@ static bool make_token(char *e) {
 
         switch (rules[i].token_type) {
 
-case TK_NOTYPE:
+         case TK_NOTYPE:
 
-  break;
+           break;
 
-case TK_NUM:
+         case TK_NUM:
 
-case TK_HEX:
+         case TK_HEX:
 
-  tokens[nr_token].type = rules[i].token_type;
+           tokens[nr_token].type = rules[i].token_type;
 
-  strncpy(tokens[nr_token].str, substr_start, substr_len);
+           strncpy(tokens[nr_token].str, substr_start, substr_len);
 
-  tokens[nr_token].str[substr_len] = '\0';
+           tokens[nr_token].str[substr_len] = '\0';
 
-  nr_token++;
+  	   nr_token++;
 
-  break;
+  	 break;
+        default:
 
+           tokens[nr_token].type = rules[i].token_type;
 
-default:
+           nr_token++;
 
-  tokens[nr_token].type = rules[i].token_type;
-
-  nr_token++;
-
-  break;
-
-
-}
-
+         break;
+       }
         break;
       }
     }
@@ -239,31 +235,20 @@ static uint32_t eval(int p, int q, bool *success) {
     return 0;
 
   }
-
-
-
   if (p == q) {
 
   if (tokens[p].type == TK_NUM) {
 
     *success = true;
-
     return strtoul(tokens[p].str, NULL, 10);
-
   }
-
   else if (tokens[p].type == TK_HEX) {
-
     *success = true;
-
     return strtoul(tokens[p].str, NULL, 16);
-
   }
-
   else {
 
     *success = false;
-
     return 0;
 
   }
