@@ -203,8 +203,6 @@ static int dominant_operator(int p, int q) {
 
     int pri = 100;
 
-
-
     if (type == '+' || type == '-') pri = 1;
 
     else if (type == '*' || type == '/') pri = 2;
@@ -235,25 +233,36 @@ static uint32_t eval(int p, int q, bool *success) {
     return 0;
 
   }
+
+
+
   if (p == q) {
 
-  if (tokens[p].type == TK_NUM) {
+    if (tokens[p].type == TK_NUM) {
 
-    *success = true;
-    return strtoul(tokens[p].str, NULL, 10);
+      *success = true;
+
+      return strtoul(tokens[p].str, NULL, 10);
+
+    }
+
+    else if (tokens[p].type == TK_HEX) {
+
+      *success = true;
+
+      return strtoul(tokens[p].str, NULL, 16);
+
+    }
+
+    else {
+
+      *success = false;
+
+      return 0;
+
+    }
+
   }
-  else if (tokens[p].type == TK_HEX) {
-    *success = true;
-    return strtoul(tokens[p].str, NULL, 16);
-  }
-  else {
-
-    *success = false;
-    return 0;
-
-  }
-
-}
 
 
 
@@ -308,16 +317,12 @@ static uint32_t eval(int p, int q, bool *success) {
       }
 
       return val1 / val2;
-
-    default:
-
+default:
       *success = false;
-
       return 0;
-
   }
-
 }
+
 uint32_t expr(char *e, bool *success) {
 
   if (!make_token(e)) {
