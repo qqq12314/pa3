@@ -8,7 +8,7 @@
 #include <regex.h>
 
 enum {
-  TK_NOTYPE = 256, TK_EQ, TK_NUM
+  TK_NOTYPE = 256, TK_EQ, TK_NUM, TK_HEX
 
   /* TODO: Add more token types */
 
@@ -31,6 +31,7 @@ static struct rule {
   {"\\(", '('},       // left parenthesis
   {"\\)", ')'},       // right parenthesis
   {"[0-9]+", TK_NUM}, // decimal number
+  {"0[xX][0-9a-fA-F]+", TK_HEX},   // hexadecimal number
 };
 
 #define NR_REGEX (sizeof(rules) / sizeof(rules[0]) )
@@ -76,9 +77,9 @@ static bool make_token(char *e) {
         char *substr_start = e + position;
         int substr_len = pmatch.rm_eo;
 
-        Log("match rules[%d] = \"%s\" at position %d with len %d: %.*s",
+        /*Log("match rules[%d] = \"%s\" at position %d with len %d: %.*s",
             i, rules[i].regex, position, substr_len, substr_len, substr_start);
-        position += substr_len;
+        position += substr_len;*/
 
         /* TODO: Now a new token is recognized with rules[i]. Add codes
          * to record the token in the array `tokens'. For certain types
@@ -105,7 +106,12 @@ static bool make_token(char *e) {
 
     break;
 
-
+case TK_HEX:
+  tokens[nr_token].type = rules[i].token_type;
+  strncpy(tokens[nr_token].str, substr_start, substr_len);
+  tokens[nr_token].str[substr_len] = '\0';
+  nr_token++;
+  break;
 
   default:
 
@@ -243,21 +249,31 @@ static uint32_t eval(int p, int q, bool *success) {
 
   if (p == q) {
 
-    if (tokens[p].type == TK_NUM) {
+  if (tokens[p].type == TK_NUM) {
 
-      *success = true;
+    *success = true;
 
-      return strtoul(tokens[p].str, NULL, 10);
-
-    } else {
-
-      *success = false;
-
-      return 0;
-
-    }
+    return strtoul(tokens[p].str, NULL, 10);
 
   }
+
+  else if (tokens[p].type == TK_HEX) {
+
+    *success = true;
+
+    return strtoul(tokens[p].str, NULL, 16);
+
+  }
+
+  else {
+
+    *success = false;
+
+    return 0;
+
+  }
+
+}
 
 
 
