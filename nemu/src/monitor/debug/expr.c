@@ -1,4 +1,5 @@
 #include "nemu.h"
+#include <stdlib.h>
 
 /* We use the POSIX regex functions to process regular expressions.
  * Type 'man regex' for more information about POSIX regex functions.
@@ -130,13 +131,31 @@ static bool make_token(char *e) {
 }
 
 uint32_t expr(char *e, bool *success) {
+
   if (!make_token(e)) {
+
     *success = false;
+
     return 0;
+
   }
 
-  /* TODO: Insert codes to evaluate the expression. */
-  TODO();
+
+
+  if (nr_token == 1 && tokens[0].type == TK_NUM) {
+
+    *success = true;
+
+    return strtoul(tokens[0].str, NULL, 10);
+
+  }
+
+
+
+  *success = false;
 
   return 0;
+
 }
+
+ 

@@ -77,6 +77,21 @@ static int cmd_info(char *args) {
   }
   return 0;
 }
+static int cmd_p(char *args) {
+
+  if (args == NULL) {
+    printf("Usage: p EXPR\n");
+    return 0;
+  }
+  bool success = false;
+  uint32_t val = expr(args, &success);
+  if (success) {
+    printf("%u (0x%x)\n", val, val);
+  } else {
+    printf("Bad expression.\n");
+  }
+  return 0;
+}
 static int cmd_q(char *args) {
   return -1;
 }
@@ -94,6 +109,7 @@ static struct {
   {"si", "Step one or more instructions", cmd_si},
   { "info", "Print program status", cmd_info },
   { "x", "Examine memory", cmd_x },
+  { "p", "Print value of expression", cmd_p },
   /* TODO: Add more commands */
 
 };
