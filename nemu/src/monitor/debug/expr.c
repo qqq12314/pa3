@@ -30,8 +30,8 @@ static struct rule {
   {"/", '/'},         // divide
   {"\\(", '('},       // left parenthesis
   {"\\)", ')'},       // right parenthesis
+  {"0[xX][0-9a-fA-F]+", TK_HEX},
   {"[0-9]+", TK_NUM}, // decimal number
-  {"0[xX][0-9a-fA-F]+", TK_HEX},   // hexadecimal number
 };
 
 #define NR_REGEX (sizeof(rules) / sizeof(rules[0]) )
@@ -88,38 +88,33 @@ static bool make_token(char *e) {
 
         switch (rules[i].token_type) {
 
-  case TK_NOTYPE:
+case TK_NOTYPE:
 
-    break;
-
-
-
-  case TK_NUM:
-
-    tokens[nr_token].type = TK_NUM;
-
-    strncpy(tokens[nr_token].str, substr_start, substr_len);
-
-    tokens[nr_token].str[substr_len] = '\0';
-
-    nr_token++;
-
-    break;
-
-case TK_HEX:
-  tokens[nr_token].type = rules[i].token_type;
-  strncpy(tokens[nr_token].str, substr_start, substr_len);
-  tokens[nr_token].str[substr_len] = '\0';
-  nr_token++;
   break;
 
-  default:
+case TK_NUM:
 
-    tokens[nr_token].type = rules[i].token_type;
+case TK_HEX:
 
-    nr_token++;
+  tokens[nr_token].type = rules[i].token_type;
 
-    break;
+  strncpy(tokens[nr_token].str, substr_start, substr_len);
+
+  tokens[nr_token].str[substr_len] = '\0';
+
+  nr_token++;
+
+  break;
+
+
+default:
+
+  tokens[nr_token].type = rules[i].token_type;
+
+  nr_token++;
+
+  break;
+
 
 }
 
