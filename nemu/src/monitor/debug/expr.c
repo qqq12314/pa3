@@ -152,10 +152,55 @@ uint32_t expr(char *e, bool *success) {
 
 
 
+  if (nr_token == 3 &&
+
+      tokens[0].type == TK_NUM &&
+
+      tokens[2].type == TK_NUM) {
+
+
+
+    uint32_t val1 = strtoul(tokens[0].str, NULL, 10);
+
+    uint32_t val2 = strtoul(tokens[2].str, NULL, 10);
+
+
+
+    *success = true;
+
+
+
+    switch (tokens[1].type) {
+
+      case '+': return val1 + val2;
+
+      case '-': return val1 - val2;
+
+      case '*': return val1 * val2;
+
+      case '/':
+
+        if (val2 == 0) {
+
+          *success = false;
+
+          return 0;
+
+        }
+
+        return val1 / val2;
+
+    }
+
+  }
+
+
+
   *success = false;
 
   return 0;
 
 }
 
- 
+
+
