@@ -12,8 +12,9 @@ enum {
   TK_NOTYPE = 256, TK_EQ, TK_NUM, TK_HEX,
   TK_REG,
   TK_NEQ,
-  TK_AND
-
+  TK_AND,
+  TK_NEG,
+  TK_DEREF
   /* TODO: Add more token types */
 
 };
@@ -141,7 +142,8 @@ static int precedence(int type) {
     case '*':
 
     case '/': return 4;
-
+    case TK_NEG:
+    case TK_DEREF: return 5;
     default: return 100;
 
   }
@@ -297,7 +299,23 @@ static uint32_t eval(int p, int q, bool *success) {
     return 0;
 
   }
+  if (tokens[op].type == TK_NEG) {
 
+  uint32_t val = eval(op + 1, q, success);
+
+  return -val;
+
+}
+
+
+
+if (tokens[op].type == TK_DEREF) {
+
+  uint32_t addr = eval(op + 1, q, success);
+
+  return vaddr_read(addr, 4);
+
+}
 
 
   uint32_t val1 = eval(p, op - 1, success);
@@ -351,9 +369,7 @@ uint32_t expr(char *e, bool *success) {
     return 0;
 
   }
-
-
-
+  
   if (nr_token == 0) {
 
     *success = false;
@@ -362,7 +378,47 @@ uint32_t expr(char *e, bool *success) {
 
   }
 
+  for (int i = 0; i < nr_token; i++) {
 
+  if (tokens[i].type == '*') {
+
+    if (i == 0 ||
+
+        !(tokens[i - 1].type == TK_NUM ||
+
+          tokens[i - 1].type == TK_HEX ||
+
+          tokens[i - 1].type == TK_REG ||
+
+          tokens[i - 1].type == ')')) {
+
+      tokens[i].type = TK_DEREF;
+
+    }
+
+  }
+
+
+
+  if (tokens[i].type == '-') {
+
+    if (i == 0 ||
+
+        !(tokens[i - 1].type == TK_NUM ||
+
+          tokens[i - 1].type == TK_HEX ||
+
+          tokens[i - 1].type == TK_REG ||
+
+          tokens[i - 1].type == ')')) {
+
+      tokens[i].type = TK_NEG;
+
+    }
+
+  }
+
+}
 
   return eval(0, nr_token - 1, success);
 
