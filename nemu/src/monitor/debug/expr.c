@@ -124,6 +124,29 @@ static bool make_token(char *e) {
 
   return true;
 }
+static int precedence(int type) {
+
+  switch (type) {
+
+    case TK_AND: return 1;
+
+    case TK_EQ:
+
+    case TK_NEQ: return 2;
+
+    case '+':
+
+    case '-': return 3;
+
+    case '*':
+
+    case '/': return 4;
+
+    default: return 100;
+
+  }
+
+}
 static bool check_parentheses(int p, int q) {
 
   if (tokens[p].type != '(' || tokens[q].type != ')') {
@@ -160,67 +183,42 @@ static bool check_parentheses(int p, int q) {
 
 }
 static int dominant_operator(int p, int q) {
-
   int op = -1;
+int level = 0;
+for (int i = p; i <= q; i++) {
 
-  int min_pri = 100;
+  if (tokens[i].type == '(') {
 
-  int level = 0;
+    level++;
 
-  int i;
+  }
 
+  else if (tokens[i].type == ')') {
 
+    level--;
 
-  for (i = p; i <= q; i++) {
+  }
+
+  else if (level == 0) {
 
     int type = tokens[i].type;
 
+    if (type == TK_AND || type == TK_EQ || type == TK_NEQ ||
 
+        type == '+' || type == '-' || type == '*' || type == '/') {
 
-    if (type == '(') {
+      if (op == -1 || precedence(type) <= precedence(tokens[op].type)) {
 
-      level++;
+        op = i;
 
-      continue;
-
-    }
-
-    if (type == ')') {
-
-      level--;
-
-      continue;
-
-    }
-
-
-
-    if (level > 0) continue;
-
-
-
-    int pri = -1;
-
-    if (type == '+' || type == '-') pri = 1;
-
-    else if (type == '*' || type == '/') pri = 2;
-
-    else continue;
-
-    if (pri <= min_pri) {
-
-      min_pri = pri;
-
-      op = i;
+      }
 
     }
 
   }
 
-
-
-  return op;
-
+}
+return op;
 }
 static uint32_t eval(int p, int q, bool *success) {
   if (p > q) {
