@@ -188,7 +188,7 @@ static int dominant_operator(int p, int q) {
   int op = -1;
 int level = 0;
 for (int i = p; i <= q; i++) {
-
+  
   if (tokens[i].type == '(') {
 
     level++;
@@ -207,7 +207,8 @@ for (int i = p; i <= q; i++) {
 
     if (type == TK_AND || type == TK_EQ || type == TK_NEQ ||
 
-        type == '+' || type == '-' || type == '*' || type == '/') {
+        type == '+' || type == '-' || type == '*' || type == '/'||
+    type == TK_NEG || type == TK_DEREF) {
 
       if (op == -1 || precedence(type) <= precedence(tokens[op].type)) {
 
@@ -419,7 +420,11 @@ uint32_t expr(char *e, bool *success) {
   }
 
 }
+  for (int i = 0; i < nr_token; i++) {
 
+  printf("token[%d]: type=%d str=%s\n", i, tokens[i].type, tokens[i].str);
+
+}
   return eval(0, nr_token - 1, success);
 
 }
