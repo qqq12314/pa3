@@ -223,8 +223,48 @@ static int dominant_operator(int p, int q) {
 
 }
 static uint32_t eval(int p, int q, bool *success) {
-
   if (p > q) {
+    *success = false;
+    return 0;
+  }
+  else if (p == q) {
+
+  if (tokens[p].type == TK_NUM) {
+
+    *success = true;
+
+    return strtoul(tokens[p].str, NULL, 10);
+
+  }
+  if (tokens[p].type == TK_HEX) {
+
+    *success = true;
+
+    return strtoul(tokens[p].str, NULL, 16);
+
+  }
+  if (tokens[p].type == TK_REG) {
+
+    *success = true;
+    if (strcmp(tokens[p].str, "$eax") == 0) return cpu.eax;
+
+    if (strcmp(tokens[p].str, "$ecx") == 0) return cpu.ecx;
+
+    if (strcmp(tokens[p].str, "$edx") == 0) return cpu.edx;
+
+    if (strcmp(tokens[p].str, "$ebx") == 0) return cpu.ebx;
+
+    if (strcmp(tokens[p].str, "$esp") == 0) return cpu.esp;
+
+    if (strcmp(tokens[p].str, "$ebp") == 0) return cpu.ebp;
+
+    if (strcmp(tokens[p].str, "$esi") == 0) return cpu.esi;
+
+    if (strcmp(tokens[p].str, "$edi") == 0) return cpu.edi;
+
+    if (strcmp(tokens[p].str, "$eip") == 0) return cpu.eip;
+
+
 
     *success = false;
 
@@ -234,33 +274,11 @@ static uint32_t eval(int p, int q, bool *success) {
 
 
 
-  if (p == q) {
+  *success = false;
 
-    if (tokens[p].type == TK_NUM) {
+  return 0;
 
-      *success = true;
-
-      return strtoul(tokens[p].str, NULL, 10);
-
-    }
-
-    else if (tokens[p].type == TK_HEX) {
-
-      *success = true;
-
-      return strtoul(tokens[p].str, NULL, 16);
-
-    }
-
-    else {
-
-      *success = false;
-
-      return 0;
-
-    }
-
-  }
+}
 
 
 
