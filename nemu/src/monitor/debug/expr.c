@@ -333,6 +333,11 @@ static uint32_t eval(int p, int q, bool *success) {
       }
 
       return val1 / val2;
+     case TK_EQ:  return val1 == val2;
+
+     case TK_NEQ: return val1 != val2;
+
+     case TK_AND: return val1 && val2;
 default:
       *success = false;
       return 0;
