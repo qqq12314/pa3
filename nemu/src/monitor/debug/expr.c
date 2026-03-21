@@ -9,7 +9,10 @@
 #include <regex.h>
 
 enum {
-  TK_NOTYPE = 256, TK_EQ, TK_NUM, TK_HEX
+  TK_NOTYPE = 256, TK_EQ, TK_NUM, TK_HEX,
+  TK_REG,
+  TK_NEQ,
+  TK_AND
 
   /* TODO: Add more token types */
 
@@ -27,12 +30,16 @@ static struct rule {
   {" +", TK_NOTYPE},    // spaces
   {"\\+", '+'},         // plus
   {"==", TK_EQ},         // equal
-   {"\\*", '*'},       // multiply
+  {"!=", TK_NEQ},
+  {"&&", TK_AND},
+  {"-", '-'},
+  {"\\*", '*'},       // multiply
   {"/", '/'},         // divide
   {"\\(", '('},       // left parenthesis
   {"\\)", ')'},       // right parenthesis
   {"0[xX][0-9a-fA-F]+", TK_HEX},
   {"[0-9]+", TK_NUM}, // decimal number
+  {"\\$[a-zA-Z][a-zA-Z0-9]*", TK_REG},
 };
 
 #define NR_REGEX (sizeof(rules) / sizeof(rules[0]) )
@@ -88,26 +95,17 @@ static bool make_token(char *e) {
          */
 
         switch (rules[i].token_type) {
-
          case TK_NOTYPE:
-
            break;
-
          case TK_NUM:
-
          case TK_HEX:
-
+         case TK_REG:
            tokens[nr_token].type = rules[i].token_type;
-
            strncpy(tokens[nr_token].str, substr_start, substr_len);
-
            tokens[nr_token].str[substr_len] = '\0';
-
   	   nr_token++;
-
   	 break;
         default:
-
            tokens[nr_token].type = rules[i].token_type;
 
            nr_token++;
