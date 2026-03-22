@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <readline/readline.h>
 #include <readline/history.h>
-
+#include "monitor/watchpoint.h"
 void cpu_exec(uint64_t);
 
 /* We use the `readline' library to provide more flexibility to read from stdin. */
@@ -75,6 +75,11 @@ static int cmd_info(char *args) {
     printf("edi\t0x%08x\n", cpu.edi);
     printf("eip\t0x%08x\n", cpu.eip);
   }
+  else if (strcmp(args, "w") == 0) {
+
+  print_watchpoints();
+
+}
   return 0;
 }
 static int cmd_p(char *args) {
@@ -95,7 +100,53 @@ static int cmd_p(char *args) {
 static int cmd_q(char *args) {
   return -1;
 }
+static int cmd_w(char *args) {
 
+  if (args == NULL) {
+
+    printf("Usage: w EXPR\n");
+
+    return 0;
+
+  }
+
+
+
+  bool success = true;
+
+  uint32_t val = expr(args, &success);
+
+  if (!success) {
+
+    printf("Bad expression.\n");
+    return 0;
+  }
+  WP *wp = new_wp();
+  strcpy(wp->expr, args);
+  wp->old_val = val;
+  printf("Watchpoint %d set on %s, initial value = %u (0x%x)\n",
+         wp->NO, wp->expr, wp->old_val, wp->old_val);
+  return 0;
+}
+static int cmd_d(char *args) {
+
+  if (args == NULL) {
+
+    printf("Usage: d N\n");
+
+    return 0;
+  }
+  int no = atoi(args);
+
+  if (delete_watchpoint(no)) {
+
+    printf("Watchpoint %d deleted.\n", no);
+  } else {
+
+    printf("No watchpoint number %d.\n", no);
+  }
+  return 0;
+}
 static int cmd_help(char *args);
 
 static struct {
@@ -110,6 +161,8 @@ static struct {
   { "info", "Print program status", cmd_info },
   { "x", "Examine memory", cmd_x },
   { "p", "Print value of expression", cmd_p },
+  { "w", "Set a watchpoint", cmd_w },
+  { "d", "Delete a watchpoint", cmd_d },
   /* TODO: Add more commands */
 
 };
