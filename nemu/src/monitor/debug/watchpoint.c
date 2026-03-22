@@ -17,6 +17,22 @@ void init_wp_pool() {
   head = NULL;
   free_ = wp_pool;
 }
+bool check_watchpoints(void) {
+  WP *p = head;
+  while (p != NULL) {
+    bool success = true;
+    uint32_t new_val = expr(p->expr, &success);
+    if (success && new_val != p->old_val) {
+      printf("Watchpoint %d triggered: %s\n", p->NO, p->expr);
+      printf("Old value = %u (0x%x)\n", p->old_val, p->old_val);
+      printf("New value = %u (0x%x)\n", new_val, new_val);
+      p->old_val = new_val;
+      return true;
+    }
+    p = p->next;
+  }
+  return false;
+}
 bool delete_watchpoint(int no) {
   WP *p = head;
   WP *prev = NULL;
