@@ -36,6 +36,17 @@ bool delete_watchpoint(int no) {
   }
   return false;
 }
+WP *new_wp(void) {
+  if (free_ == NULL) {
+    printf("No free watchpoint.\n");
+    return NULL;
+  }
+  WP *wp = free_;
+  free_ = free_->next;
+  wp->next = head;
+  head = wp;
+  return wp;
+}
 void print_watchpoints() {
   WP *p = head;
   if (p == NULL) {
@@ -45,6 +56,25 @@ void print_watchpoints() {
   while (p != NULL) {
     printf("Watchpoint %d: %s = %u (0x%x)\n",
            p->NO, p->expr, p->old_val, p->old_val);
+    p = p->next;
+  }
+}
+void free_wp(WP *wp) {
+  if (wp == NULL) return;
+  WP *p = head;
+  WP *prev = NULL;
+  while (p != NULL) {
+    if (p == wp) {
+      if (prev == NULL) {
+        head = p->next;
+      } else {
+        prev->next = p->next;
+      }
+      p->next = free_;
+      free_ = p;
+      return;
+    }
+    prev = p;
     p = p->next;
   }
 }
