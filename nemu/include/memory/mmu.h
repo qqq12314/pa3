@@ -17,7 +17,7 @@ typedef union CR0 {
     uint32_t dont_care           : 30;
     uint32_t paging              : 1;
   };
-  uint32_t val;
+  uint64_t val;
 } CR0;
 
 /* the Control Register 3 (physical address of page directory) */
