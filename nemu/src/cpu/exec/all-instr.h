@@ -13,3 +13,4 @@ make_EHelper(jcc);
 make_EHelper(jmp_rm);
 
 make_EHelper(call);
+make_EHelper(push);
