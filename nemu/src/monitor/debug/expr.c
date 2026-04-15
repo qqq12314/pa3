@@ -1,4 +1,6 @@
 #include "nemu.h"
+#include <stdlib.h>
+#include <string.h>
 
 /* We use the POSIX regex functions to process regular expressions.
  * Type 'man regex' for more information about POSIX regex functions.
@@ -7,8 +9,12 @@
 #include <regex.h>
 
 enum {
-  TK_NOTYPE = 256, TK_EQ
-
+  TK_NOTYPE = 256, TK_EQ, TK_NUM, TK_HEX,
+  TK_REG,
+  TK_NEQ,
+  TK_AND,
+  TK_NEG,
+  TK_DEREF
   /* TODO: Add more token types */
 
 };
@@ -24,7 +30,17 @@ static struct rule {
 
   {" +", TK_NOTYPE},    // spaces
   {"\\+", '+'},         // plus
-  {"==", TK_EQ}         // equal
+  {"==", TK_EQ},         // equal
+  {"!=", TK_NEQ},
+  {"&&", TK_AND},
+  {"-", '-'},
+  {"\\*", '*'},       // multiply
+  {"/", '/'},         // divide
+  {"\\(", '('},       // left parenthesis
+  {"\\)", ')'},       // right parenthesis
+  {"0[xX][0-9a-fA-F]+", TK_HEX},
+  {"[0-9]+", TK_NUM}, // decimal number
+  {"\\$[a-zA-Z][a-zA-Z0-9]*", TK_REG},
 };
 
 #define NR_REGEX (sizeof(rules) / sizeof(rules[0]) )
@@ -70,8 +86,8 @@ static bool make_token(char *e) {
         char *substr_start = e + position;
         int substr_len = pmatch.rm_eo;
 
-        Log("match rules[%d] = \"%s\" at position %d with len %d: %.*s",
-            i, rules[i].regex, position, substr_len, substr_len, substr_start);
+        /*Log("match rules[%d] = \"%s\" at position %d with len %d: %.*s",
+            i, rules[i].regex, position, substr_len, substr_len, substr_start);*/
         position += substr_len;
 
         /* TODO: Now a new token is recognized with rules[i]. Add codes
@@ -80,9 +96,23 @@ static bool make_token(char *e) {
          */
 
         switch (rules[i].token_type) {
-          default: TODO();
-        }
+         case TK_NOTYPE:
+           break;
+         case TK_NUM:
+         case TK_HEX:
+         case TK_REG:
+           tokens[nr_token].type = rules[i].token_type;
+           strncpy(tokens[nr_token].str, substr_start, substr_len);
+           tokens[nr_token].str[substr_len] = '\0';
+  	   nr_token++;
+  	 break;
+        default:
+           tokens[nr_token].type = rules[i].token_type;
 
+           nr_token++;
+
+         break;
+       }
         break;
       }
     }
@@ -95,15 +125,302 @@ static bool make_token(char *e) {
 
   return true;
 }
+static int precedence(int type) {
 
-uint32_t expr(char *e, bool *success) {
-  if (!make_token(e)) {
+  switch (type) {
+
+    case TK_AND: return 1;
+
+    case TK_EQ:
+
+    case TK_NEQ: return 2;
+
+    case '+':
+
+    case '-': return 3;
+
+    case '*':
+
+    case '/': return 4;
+    case TK_NEG:
+    case TK_DEREF: return 5;
+    default: return 100;
+
+  }
+
+}
+static bool check_parentheses(int p, int q) {
+
+  if (tokens[p].type != '(' || tokens[q].type != ')') {
+
+    return false;
+
+  }
+
+
+
+  int balance = 0;
+
+  int i;
+
+  for (i = p; i <= q; i++) {
+
+    if (tokens[i].type == '(') balance++;
+
+    if (tokens[i].type == ')') balance--;
+
+
+
+    if (balance == 0 && i < q) {
+
+      return false;
+
+    }
+
+  }
+
+
+
+  return balance == 0;
+
+}
+static int dominant_operator(int p, int q) {
+  int op = -1;
+int level = 0;
+for (int i = p; i <= q; i++) {
+  
+  if (tokens[i].type == '(') {
+
+    level++;
+
+  }
+
+  else if (tokens[i].type == ')') {
+
+    level--;
+
+  }
+
+  else if (level == 0) {
+
+    int type = tokens[i].type;
+
+    if (type == TK_AND || type == TK_EQ || type == TK_NEQ ||
+
+        type == '+' || type == '-' || type == '*' || type == '/'||
+    type == TK_NEG || type == TK_DEREF) {
+
+      if (op == -1 || precedence(type) <= precedence(tokens[op].type)) {
+
+        op = i;
+
+      }
+
+    }
+
+  }
+
+}
+return op;
+}
+static uint32_t eval(int p, int q, bool *success) {
+  if (p > q) {
     *success = false;
     return 0;
   }
+  else if (p == q) {
 
-  /* TODO: Insert codes to evaluate the expression. */
-  TODO();
+  if (tokens[p].type == TK_NUM) {
+
+    *success = true;
+
+    return strtoul(tokens[p].str, NULL, 10);
+
+  }
+  if (tokens[p].type == TK_HEX) {
+
+    *success = true;
+
+    return strtoul(tokens[p].str, NULL, 16);
+
+  }
+  if (tokens[p].type == TK_REG) {
+
+    *success = true;
+    if (strcmp(tokens[p].str, "$eax") == 0) return cpu.eax;
+
+    if (strcmp(tokens[p].str, "$ecx") == 0) return cpu.ecx;
+
+    if (strcmp(tokens[p].str, "$edx") == 0) return cpu.edx;
+
+    if (strcmp(tokens[p].str, "$ebx") == 0) return cpu.ebx;
+
+    if (strcmp(tokens[p].str, "$esp") == 0) return cpu.esp;
+
+    if (strcmp(tokens[p].str, "$ebp") == 0) return cpu.ebp;
+
+    if (strcmp(tokens[p].str, "$esi") == 0) return cpu.esi;
+
+    if (strcmp(tokens[p].str, "$edi") == 0) return cpu.edi;
+
+    if (strcmp(tokens[p].str, "$eip") == 0) return cpu.eip;
+
+
+
+    *success = false;
+
+    return 0;
+
+  }
+
+
+
+  *success = false;
 
   return 0;
+
 }
+
+
+
+  if (check_parentheses(p, q)) {
+
+    return eval(p + 1, q - 1, success);
+
+  }
+
+
+
+  int op = dominant_operator(p, q);
+
+  if (op == -1) {
+
+    *success = false;
+
+    return 0;
+
+  }
+  if (tokens[op].type == TK_NEG) {
+
+  uint32_t val = eval(op + 1, q, success);
+
+  return -val;
+
+}
+
+
+
+if (tokens[op].type == TK_DEREF) {
+
+  uint32_t addr = eval(op + 1, q, success);
+
+  return vaddr_read(addr, 4);
+
+}
+
+
+  uint32_t val1 = eval(p, op - 1, success);
+
+  if (!*success) return 0;
+
+
+
+  uint32_t val2 = eval(op + 1, q, success);
+
+  if (!*success) return 0;
+
+
+
+  switch (tokens[op].type) {
+
+    case '+': return val1 + val2;
+
+    case '-': return val1 - val2;
+
+    case '*': return val1 * val2;
+
+    case '/':
+
+      if (val2 == 0) {
+
+        *success = false;
+
+        return 0;
+
+      }
+
+      return val1 / val2;
+     case TK_EQ:  return val1 == val2;
+
+     case TK_NEQ: return val1 != val2;
+
+     case TK_AND: return val1 && val2;
+default:
+      *success = false;
+      return 0;
+  }
+}
+
+uint32_t expr(char *e, bool *success) {
+
+  if (!make_token(e)) {
+
+    *success = false;
+
+    return 0;
+
+  }
+  
+  if (nr_token == 0) {
+
+    *success = false;
+
+    return 0;
+
+  }
+
+  for (int i = 0; i < nr_token; i++) {
+
+  if (tokens[i].type == '*') {
+
+    if (i == 0 ||
+
+        !(tokens[i - 1].type == TK_NUM ||
+
+          tokens[i - 1].type == TK_HEX ||
+
+          tokens[i - 1].type == TK_REG ||
+
+          tokens[i - 1].type == ')')) {
+
+      tokens[i].type = TK_DEREF;
+
+    }
+
+  }
+
+
+
+  if (tokens[i].type == '-') {
+
+    if (i == 0 ||
+
+        !(tokens[i - 1].type == TK_NUM ||
+
+          tokens[i - 1].type == TK_HEX ||
+
+          tokens[i - 1].type == TK_REG ||
+
+          tokens[i - 1].type == ')')) {
+
+      tokens[i].type = TK_NEG;
+
+    }
+
+  }
+
+}
+  return eval(0, nr_token - 1, success);
+
+}
+ 

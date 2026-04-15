@@ -2,11 +2,11 @@
 #include "monitor/expr.h"
 #include "monitor/watchpoint.h"
 #include "nemu.h"
-
+#include <string.h>
 #include <stdlib.h>
 #include <readline/readline.h>
 #include <readline/history.h>
-
+#include "monitor/watchpoint.h"
 void cpu_exec(uint64_t);
 
 /* We use the `readline' library to provide more flexibility to read from stdin. */
@@ -26,16 +26,127 @@ char* rl_gets() {
 
   return line_read;
 }
-
 static int cmd_c(char *args) {
   cpu_exec(-1);
   return 0;
 }
+static int cmd_x(char *args) {
+  if (args == NULL) {
+    printf("Usage: x N EXPR\n");
+    return 0;
+  }
+  char *n_str = strtok(args, " ");
+  char *addr_str = strtok(NULL, " ");
+  if (n_str == NULL || addr_str == NULL) {
+    printf("Usage: x N EXPR\n");
+    return 0;
 
+  }
+  int n = atoi(n_str);
+  uint32_t addr = strtoul(addr_str, NULL, 16);
+  int i;
+  for (i = 0; i < n; i++) {
+    uint32_t data = vaddr_read(addr + i * 4, 4);
+    printf("0x%08x: 0x%08x\n", addr + i * 4, data);
+  }
+  return 0;
+}
+static int cmd_si(char *args) {
+  int n = 1;
+  if (args != NULL) {
+    n = atoi(args);
+  }
+  cpu_exec(n);
+  return 0;
+}
+static int cmd_info(char *args) {
+  if (args == NULL) {
+    printf("Usage: info r\n");
+    return 0;
+  }
+  if (strcmp(args, "r") == 0) {
+    printf("eax\t0x%08x\n", cpu.eax);
+    printf("ecx\t0x%08x\n", cpu.ecx);
+    printf("edx\t0x%08x\n", cpu.edx);
+    printf("ebx\t0x%08x\n", cpu.ebx);
+    printf("esp\t0x%08x\n", cpu.esp);
+    printf("ebp\t0x%08x\n", cpu.ebp);
+    printf("esi\t0x%08x\n", cpu.esi);
+    printf("edi\t0x%08x\n", cpu.edi);
+    printf("eip\t0x%08x\n", cpu.eip);
+  }
+  else if (strcmp(args, "w") == 0) {
+
+  print_watchpoints();
+
+}
+  return 0;
+}
+static int cmd_p(char *args) {
+
+  if (args == NULL) {
+    printf("Usage: p EXPR\n");
+    return 0;
+  }
+  bool success = false;
+  uint32_t val = expr(args, &success);
+  if (success) {
+    printf("%u (0x%x)\n", val, val);
+  } else {
+    printf("Bad expression.\n");
+  }
+  return 0;
+}
 static int cmd_q(char *args) {
   return -1;
 }
+static int cmd_w(char *args) {
 
+  if (args == NULL) {
+
+    printf("Usage: w EXPR\n");
+
+    return 0;
+
+  }
+
+
+
+  bool success = true;
+
+  uint32_t val = expr(args, &success);
+
+  if (!success) {
+
+    printf("Bad expression.\n");
+    return 0;
+  }
+  WP *wp = new_wp();
+  strcpy(wp->expr, args);
+  wp->old_val = val;
+  printf("Watchpoint %d set on %s, initial value = %u (0x%x)\n",
+         wp->NO, wp->expr, wp->old_val, wp->old_val);
+  return 0;
+}
+static int cmd_d(char *args) {
+
+  if (args == NULL) {
+
+    printf("Usage: d N\n");
+
+    return 0;
+  }
+  int no = atoi(args);
+
+  if (delete_watchpoint(no)) {
+
+    printf("Watchpoint %d deleted.\n", no);
+  } else {
+
+    printf("No watchpoint number %d.\n", no);
+  }
+  return 0;
+}
 static int cmd_help(char *args);
 
 static struct {
@@ -46,7 +157,12 @@ static struct {
   { "help", "Display informations about all supported commands", cmd_help },
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q },
-
+  {"si", "Step one or more instructions", cmd_si},
+  { "info", "Print program status", cmd_info },
+  { "x", "Examine memory", cmd_x },
+  { "p", "Print value of expression", cmd_p },
+  { "w", "Set a watchpoint", cmd_w },
+  { "d", "Delete a watchpoint", cmd_d },
   /* TODO: Add more commands */
 
 };
