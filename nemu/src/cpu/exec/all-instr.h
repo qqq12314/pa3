@@ -7,7 +7,7 @@ make_EHelper(operand_size);
 make_EHelper(inv);
 make_EHelper(nemu_trap);
 make_EHelper(jmp);
-
+make_EHelper(nop);
 make_EHelper(jcc);
 
 make_EHelper(jmp_rm);

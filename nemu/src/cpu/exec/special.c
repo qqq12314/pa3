@@ -1,9 +1,6 @@
 #include "cpu/exec.h"
 #include "monitor/monitor.h"
 
-make_EHelper(nop) {
-  print_asm("nop");
-}
 
 make_EHelper(inv) {
   /* invalid opcode */
@@ -31,7 +28,11 @@ make_EHelper(inv) {
 
   print_asm("invalid opcode");
 }
+make_EHelper(nop) {
 
+  print_asm("nop");
+
+}
 make_EHelper(nemu_trap) {
   print_asm("nemu trap (eax = %d)", cpu.eax);
 
