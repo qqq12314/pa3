@@ -28,19 +28,24 @@ static inline make_DopHelper(I) {
  */
 /* sign immediate */
 static inline make_DopHelper(SI) {
+
   assert(op->width == 1 || op->width == 4);
-
   op->type = OP_TYPE_IMM;
-
-  op->simm = instr_fetch(eip, op->width);
+  if (op->width == 1) {
+    op->simm = (int8_t)instr_fetch(eip, 1);
+  } else {
+    op->simm = (int32_t)instr_fetch(eip, 4);
+  }
 
   rtl_li(&op->val, op->simm);
 
 #ifdef DEBUG
-  snprintf(op->str, OP_STR_SIZE, "$0x%x", op->simm);
-#endif
-}
 
+  snprintf(op->str, OP_STR_SIZE, "$0x%x", op->simm);
+
+#endif
+
+}
 /* I386 manual does not contain this abbreviation.
  * It is convenient to merge them into a single helper function.
  */
