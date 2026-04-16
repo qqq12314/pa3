@@ -123,7 +123,11 @@ make_DHelper(mov_E2G) {
 }
 
 make_DHelper(lea_M2G) {
-  decode_op_rm(eip, id_src, false, id_dest, false);
+
+  read_ModR_M(eip, id_src, false, id_dest, false);
+
+  assert(id_src->type == OP_TYPE_MEM);
+
 }
 
 /* AL <- Ib
