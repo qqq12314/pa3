@@ -70,7 +70,7 @@ make_EHelper(neg);
 
 
 make_EHelper(ret);
-
+make_EHelper(leave);
 make_EHelper(call_rm);
 
 

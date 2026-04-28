@@ -22,7 +22,21 @@ make_EHelper(jmp_rm) {
 
   print_asm("jmp *%s", id_dest->str);
 }
+make_EHelper(leave) {
 
+  rtl_lr(&t0, R_EBP, 4);
+
+  rtl_sr(R_ESP, 4, &t0);
+
+  rtl_pop(&t0);
+
+  rtl_sr(R_EBP, 4, &t0);
+
+
+
+  print_asm("leave");
+
+}
 make_EHelper(call) {
 
   // tddress is calculated at the decode stage
