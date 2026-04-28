@@ -275,13 +275,31 @@ make_EHelper(imul1) {
 
 // imul with two operands
 make_EHelper(imul2) {
-  rtl_sext(&id_src->val, &id_src->val, id_src->width);
-  rtl_sext(&id_dest->val, &id_dest->val, id_dest->width);
 
-  rtl_imul(&t0, &t1, &id_dest->val, &id_src->val);
-  operand_write(id_dest, &t1);
+  int64_t res;
+
+
+
+  if (id_dest->width == 2) {
+
+    res = (int16_t)id_dest->val * (int16_t)id_src->val;
+
+  } else {
+
+    res = (int32_t)id_dest->val * (int32_t)id_src->val;
+
+  }
+
+
+
+  rtl_li(&t0, (rtlreg_t)res);
+
+  operand_write(id_dest, &t0);
+
+
 
   print_asm_template2(imul);
+
 }
 
 // imul with three operands
