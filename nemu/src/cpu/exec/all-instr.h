@@ -15,7 +15,7 @@ make_EHelper(jmp_rm);
 make_EHelper(call);
 make_EHelper(push);
 make_EHelper(add);
-
+make_EHelper(not);
 make_EHelper(or);
 
 make_EHelper(adc);
