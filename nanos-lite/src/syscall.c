@@ -13,7 +13,7 @@ _RegSet* do_syscall(_RegSet *r) {
 
   int ret = 0;
   switch (a[0]) {
-    case SYS_none: ret = 0; break;
+    case SYS_none: ret = 1; break;
     case SYS_exit: _halt(a[1]); break;
     case SYS_open: ret = fs_open((const char *)a[1], a[2], a[3]); break;
     case SYS_read: ret = fs_read(a[1], (void *)a[2], a[3]); break;
