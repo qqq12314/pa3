@@ -14,7 +14,10 @@ void free_page(void *p) {
   panic("not implement yet");
 }
 
-/* The brk() system call handler. */
+/* The brk() system call handler.
+ * PA3 is single-task and has no virtual memory protection yet, so every
+ * requested break value in the user heap is accepted.
+ */
 int mm_brk(uint32_t new_brk) {
   return 0;
 }
