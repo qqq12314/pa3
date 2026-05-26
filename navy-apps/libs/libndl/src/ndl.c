@@ -89,7 +89,8 @@ static const char *keys[] = {
 #define numkeys ( sizeof(keys) / sizeof(keys[0]) )
 
 int NDL_WaitEvent(NDL_Event *event) {
-
+  static int fake_time = 0;
+  fake_time += 16;
   if (event != NULL) {
 
     event->type = NDL_EVENT_TIMER;
