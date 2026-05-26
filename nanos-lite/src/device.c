@@ -19,8 +19,6 @@ size_t events_read(void *buf, size_t len) {
     return 0;
   }
 
-  // FILE/getc() may call read(fd, ..., 1). Therefore /dev/events must behave
-  // like a byte stream: keep the current event line and return it piece by piece.
   if (ev_pos >= ev_len) {
     int key = _read_key();
 
@@ -45,10 +43,16 @@ size_t events_read(void *buf, size_t len) {
   if (n > len) {
     n = len;
   }
-  memcpy(buf, evbuf + ev_pos, n);
+
+  for (size_t i = 0; i < n; i++) {
+    ((char *)buf)[i] = evbuf[ev_pos + i];
+  }
+
   ev_pos += n;
   return n;
 }
+
+
 
 static char dispinfo[128] __attribute__((used));
 
