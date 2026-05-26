@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
-
+#include <unistd.h>
 static int has_nwm = 0;
 static uint32_t *canvas;
 static FILE *fbdev, *evtdev;
@@ -89,40 +89,15 @@ static const char *keys[] = {
 #define numkeys ( sizeof(keys) / sizeof(keys[0]) )
 
 int NDL_WaitEvent(NDL_Event *event) {
-  char buf[256], *p = buf, ch;
 
-  while (1) {
-    while ((ch = getc(evtdev)) != -1) {
-      *p ++ = ch;
-      assert(p - buf < sizeof(buf));
-      if (ch == '\n') break;
-    }
+  if (event != NULL) {
 
-    if (buf[0] == 'k') {
-      char keyname[32];
-      event->type = buf[1] == 'd' ? NDL_EVENT_KEYDOWN : NDL_EVENT_KEYUP;
-      event->data = -1;
-      sscanf(buf + 3, "%s", keyname);
-      for (int i = 0; i < numkeys; i ++) {
-        if (strcmp(keys[i], keyname) == 0) {
-          event->data = i;
-          break;
-        }
-      }
-      assert(event->data >= 1 && event->data < numkeys);
-      return 0;
-    }
-    if (buf[0] == 't') {
-      int tsc;
-      sscanf(buf + 2, "%d", &tsc);
-      event->type = NDL_EVENT_TIMER;
-      event->data = tsc;
-      return 0;
-    }
+    event->type = NDL_EVENT_TIMER;
+
   }
 
-  assert(0);
-  return -1;
+  return 1;
+
 }
 
 static void get_display_info() {
