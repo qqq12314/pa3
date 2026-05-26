@@ -11,21 +11,43 @@ static const char *keyname[256] __attribute__((used)) = {
 };
 
 size_t events_read(void *buf, size_t len) {
-  int key = _read_key();
+  static char evbuf[64];
+  static size_t ev_len = 0;
+  static size_t ev_pos = 0;
 
-  if (key != _KEY_NONE) {
-    int is_keydown = key & KEYDOWN_MASK;
-    int keycode = key & ~KEYDOWN_MASK;
-    int n = snprintf(buf, len, "%s %s\n",
-        is_keydown ? "kd" : "ku", keyname[keycode]);
-    return n < 0 ? 0 : (n < len ? n : len);
+  if (len == 0) {
+    return 0;
   }
 
-  // PAL needs timer events to advance the screen.
-  // Do not return 0 here; stdio may treat it as EOF.
-  unsigned long now = _uptime();
-  int n = snprintf(buf, len, "t %lu\n", now);
-  return n < 0 ? 0 : (n < len ? n : len);
+  // FILE/getc() may call read(fd, ..., 1). Therefore /dev/events must behave
+  // like a byte stream: keep the current event line and return it piece by piece.
+  if (ev_pos >= ev_len) {
+    int key = _read_key();
+
+    if (key != _KEY_NONE) {
+      int is_keydown = key & KEYDOWN_MASK;
+      int keycode = key & ~KEYDOWN_MASK;
+      ev_len = snprintf(evbuf, sizeof(evbuf), "%s %s\n",
+          is_keydown ? "kd" : "ku", keyname[keycode]);
+    } else {
+      unsigned long now = _uptime();
+      ev_len = snprintf(evbuf, sizeof(evbuf), "t %lu\n", now);
+    }
+
+    if (ev_len >= sizeof(evbuf)) {
+      ev_len = sizeof(evbuf) - 1;
+      evbuf[ev_len] = '\0';
+    }
+    ev_pos = 0;
+  }
+
+  size_t n = ev_len - ev_pos;
+  if (n > len) {
+    n = len;
+  }
+  memcpy(buf, evbuf + ev_pos, n);
+  ev_pos += n;
+  return n;
 }
 
 static char dispinfo[128] __attribute__((used));
