@@ -89,17 +89,55 @@ static const char *keys[] = {
 #define numkeys ( sizeof(keys) / sizeof(keys[0]) )
 
 int NDL_WaitEvent(NDL_Event *event) {
-  static int fake_time = 0;
-  fake_time += 16;
-  if (event != NULL) {
+  char buf[64];
+  while (1) {
+    int pos = 0;
+    int ch;
+    while (pos < sizeof(buf) - 1) {
+      ch = getc(evtdev);
+      if (ch == -1) {
+        break;
+       }
+    buf[pos++] = ch;
+      if (ch == '\n') {
+        break;
+       }
+     }
 
-    event->type = NDL_EVENT_TIMER;
+    if (pos == 0) {
+      continue;
+    }
+  buf[pos] = '\0';
+  if (buf[0] == 'k') {
+      char keyname[32];
 
+      event->type = (buf[1] == 'd') ? NDL_EVENT_KEYDOWN : NDL_EVENT_KEYUP;
+      event->data = -1;
+
+      sscanf(buf + 3, "%31s", keyname);
+  for (int i = 0; i < numkeys; i++) {
+        if (strcmp(keys[i], keyname) == 0) {
+          event->data = i;
+          break;
+        }
+      }
+
+      if (event->data >= 1 && event->data < numkeys) {
+        return 0;
+      }
+    }
+   if (buf[0] == 't') {
+      int tsc = 0;
+      sscanf(buf + 2, "%d", &tsc);
+
+      event->type = NDL_EVENT_TIMER;
+      event->data = tsc;
+
+      return 0;
+    }
   }
-
-  return 1;
-
 }
+  
 
 static void get_display_info() {
   FILE *dispinfo = fopen("/proc/dispinfo", "r");

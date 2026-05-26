@@ -47,7 +47,7 @@ size_t events_read(void *buf, size_t len) {
   for (size_t i = 0; i < n; i++) {
     ((char *)buf)[i] = evbuf[ev_pos + i];
   }
-
+  memcpy(buf, evbuf + ev_pos, n);
   ev_pos += n;
   return n;
 }
