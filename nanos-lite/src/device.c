@@ -12,22 +12,20 @@ static const char *keyname[256] __attribute__((used)) = {
 
 size_t events_read(void *buf, size_t len) {
   int key = _read_key();
+
   if (key != _KEY_NONE) {
     int is_keydown = key & KEYDOWN_MASK;
     int keycode = key & ~KEYDOWN_MASK;
-    int n = snprintf(buf, len, "%s %s\n", is_keydown ? "kd" : "ku", keyname[keycode]);
+    int n = snprintf(buf, len, "%s %s\n",
+        is_keydown ? "kd" : "ku", keyname[keycode]);
     return n < 0 ? 0 : (n < len ? n : len);
   }
 
-  static unsigned long last = 0;
+  // PAL needs timer events to advance the screen.
+  // Do not return 0 here; stdio may treat it as EOF.
   unsigned long now = _uptime();
-  if (now / 33 != last / 33) {
-    last = now;
-    int n = snprintf(buf, len, "t %lu\n", now);
-    return n < 0 ? 0 : (n < len ? n : len);
-  }
-
-  return 0;
+  int n = snprintf(buf, len, "t %lu\n", now);
+  return n < 0 ? 0 : (n < len ? n : len);
 }
 
 static char dispinfo[128] __attribute__((used));
